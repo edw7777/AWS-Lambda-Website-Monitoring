@@ -1,0 +1,39 @@
+import urllib.request
+import json
+
+def lambda_handler(event, handler):
+  url = "https://www.youtube.com/"
+  try:
+    response = urlib.request.urlopen(url)
+    status = response.getcode()
+    message = "Website is running"
+  except:
+    status = 500
+    message = "Website is down"
+cw = boto3.client('cloudwatch')
+cw.put_metric_data(
+  Namespace='WebsiteMonitoring',
+  MetricData = [
+    {
+      'MetricName': 'WebsiteStatus',
+      'Dimensions': [
+        {
+          'Name': 'WebsiteURL',
+          'Value': url,
+         },
+        ],
+        'Value': status,
+        'Unit': 'Count',
+        'StorageResolution': 1
+     },
+  ]
+)
+
+if status != 200:
+        sns = boto3.client('sns')
+        sns.publish(
+            TopicArn='arn:aws:sns:us-east-1:123456789012:WebsiteStatus',
+            Message=json.dumps({'default': message}),
+            MessageStructure='json'
+        )
+          
